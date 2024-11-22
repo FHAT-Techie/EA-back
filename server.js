@@ -2,20 +2,29 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const nodemailer = require("nodemailer");
+const rateLimit = require("express-rate-limit");
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(bodyParser.json());
 app.use(cors());
 
+// Rate Limiter
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per window
+  message: { error: "Too many requests, please try again later." },
+});
+app.use(limiter);
+
 // Nodemailer Transporter
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "your-email@gmail.com", // Replace with your email
-    pass: "your-email-password-or-app-password", // Use an app password if 2FA is enabled
+    user: process.env.EMAIL_USER, // Replace with environment variable
+    pass: process.env.EMAIL_PASS, // Replace with environment variable
   },
 });
 
@@ -35,8 +44,8 @@ app.post("/send-contact-email", async (req, res) => {
   `;
 
   const mailOptions = {
-    from: `"Contact Inquiry" <your-email@gmail.com>`,
-    to: "recipient-email@example.com", // Replace with your email
+    from: `"Contact Inquiry" <${process.env.EMAIL_USER}>`,
+    to: process.env.EMAIL_USER, // Replace with your email
     subject: "New Contact Form Submission",
     text: emailContent,
   };
@@ -90,8 +99,8 @@ app.post("/send-partnership-email", async (req, res) => {
   `;
 
   const mailOptions = {
-    from: `"Partnership Inquiry" <your-email@gmail.com>`,
-    to: "recipient-email@example.com", // Replace with your email
+    from: `"Partnership Inquiry" <${process.env.EMAIL_USER}>`,
+    to: process.env.EMAIL_USER, // Replace with your email
     subject: "New Partnership Inquiry",
     text: emailContent,
   };
