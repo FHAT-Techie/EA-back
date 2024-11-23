@@ -3,7 +3,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const nodemailer = require("nodemailer");
 const rateLimit = require("express-rate-limit");
-require('dotenv').config();
+require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -12,11 +12,11 @@ const PORT = process.env.PORT || 5000;
 app.use(bodyParser.json());
 app.use(cors());
 
-// Rate Limiter
+// Rate Limiter to prevent abuse
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per window
-  message: { error: "Too many requests, please try again later." },
+  message: { error: "Too many requests. Please try again later." },
 });
 app.use(limiter);
 
@@ -24,44 +24,37 @@ app.use(limiter);
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.EMAIL_USER, // Replace with environment variable
-    pass: process.env.EMAIL_PASS, // Replace with environment variable
+    user: process.env.EMAIL_USER, // Your email address (via environment variable)
+    pass: process.env.EMAIL_PASS, // Your email password (via environment variable)
   },
 });
 
-// Route to Handle Contact Form
+// **Contact Form Endpoint**
 app.post("/send-contact-email", async (req, res) => {
   const { name, email, message } = req.body;
 
-  // Validate required fields
   if (!name || !email || !message) {
-    return res.status(400).json({ error: "Missing required fields in contact form." });
+    return res.status(400).json({ error: "All fields are required." });
   }
-
-  const emailContent = `
-    Name: ${name}
-    Email: ${email}
-    Message: ${message}
-  `;
 
   const mailOptions = {
     from: `"Contact Inquiry" <${process.env.EMAIL_USER}>`,
-    to: process.env.EMAIL_USER, // Replace with your email
+    to: process.env.EMAIL_USER,
     subject: "New Contact Form Submission",
-    text: emailContent,
+    text: `Name: ${name}\nEmail: ${email}\nMessage: ${message}`,
   };
 
   try {
     const info = await transporter.sendMail(mailOptions);
     console.log("Contact email sent: ", info.response);
-    res.status(200).json({ message: "Contact form submitted successfully!" });
+    res.status(200).json({ message: "Message sent successfully." });
   } catch (error) {
     console.error("Error sending contact email:", error);
-    res.status(500).json({ error: "Failed to send contact email." });
+    res.status(500).json({ error: "Failed to send the message. Please try again." });
   }
 });
 
-// Route to Handle Partnership Form
+// **Partnership Form Endpoint**
 app.post("/send-partnership-email", async (req, res) => {
   const {
     partnerName,
@@ -79,9 +72,8 @@ app.post("/send-partnership-email", async (req, res) => {
     communicationAgreement,
   } = req.body;
 
-  // Validate required fields
   if (!partnerName || !partnerEmail || !partnerPhoneNumber || !howWouldYouPartner?.length) {
-    return res.status(400).json({ error: "Missing required fields in partnership form." });
+    return res.status(400).json({ error: "Required fields are missing." });
   }
 
   const emailContent = `
@@ -91,17 +83,17 @@ app.post("/send-partnership-email", async (req, res) => {
     Organization Name: ${partnerOrganizationName || "N/A"}
     Organization Website: ${partnerOrganizationWebsite || "N/A"}
     Organization Type: ${partnerOrganizationType || otherOrganizationType || "N/A"}
-    How Would You Partner: ${howWouldYouPartner.join(", ")}
+    Partnership Type: ${howWouldYouPartner.join(", ")}
     Other Partnership Type: ${otherHowWouldYouPartner || "N/A"}
     Partnership Idea: ${partnershipIdea || "N/A"}
     How Did You Hear About Us: ${howDidYouHearAboutUs || "N/A"}
-    Additional Comment or Question: ${additionalCommentOrQuestion || "N/A"}
+    Additional Comment: ${additionalCommentOrQuestion || "N/A"}
     Communication Agreement: ${communicationAgreement ? "Agreed" : "Not Agreed"}
   `;
 
   const mailOptions = {
     from: `"Partnership Inquiry" <${process.env.EMAIL_USER}>`,
-    to: process.env.EMAIL_USER, // Replace with your email
+    to: process.env.EMAIL_USER,
     subject: "New Partnership Inquiry",
     text: emailContent,
   };
@@ -109,14 +101,14 @@ app.post("/send-partnership-email", async (req, res) => {
   try {
     const info = await transporter.sendMail(mailOptions);
     console.log("Partnership email sent: ", info.response);
-    res.status(200).json({ message: "Partnership form submitted successfully!" });
+    res.status(200).json({ message: "Partnership inquiry submitted successfully." });
   } catch (error) {
     console.error("Error sending partnership email:", error);
-    res.status(500).json({ error: "Failed to send partnership email." });
+    res.status(500).json({ error: "Failed to send the inquiry. Please try again." });
   }
 });
 
-// Start the Server
+// Start the server
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running at http://localhost:${PORT}`);
 });
