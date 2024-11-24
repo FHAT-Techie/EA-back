@@ -1,15 +1,12 @@
-
 const express = require("express");
 const axios = require("axios");
 require("dotenv").config();
 
-const app = express();
-app.use(express.json());
-
+const router = express.Router();
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
 
 // Verify Payment Endpoint
-app.post("/verify-payment", async (req, res) => {
+router.post("/verify-payment", async (req, res) => {
   const { reference } = req.body;
 
   if (!reference) {
@@ -40,8 +37,4 @@ app.post("/verify-payment", async (req, res) => {
   }
 });
 
-// Server Listener
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+module.exports = router;
